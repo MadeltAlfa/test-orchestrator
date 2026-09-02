@@ -8,5 +8,10 @@ Route::get('/', function () {
     return 'Laravel OK';
 });
 
-Route::resource('player-profiles', PlayerProfileController::class);
-Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
+Route::middleware(['auth'])->group(function () {
+    Route::resource('player-profiles', PlayerProfileController::class);
+
+    Route::get('settings', [SettingController::class, 'index'])
+        ->name('settings.index')
+        ->middleware('can:access-superadmin');
+});
