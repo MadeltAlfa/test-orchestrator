@@ -17,21 +17,22 @@ class IndicatorTestController extends Controller
 {
     /**
      * Display a listing of tests for a specific indicator.
+     * availableTests pakai pluck('name','id') untuk dropdown: hemat memori, satu query dua kolom.
      */
     public function index($indicatorId)
     {
         $indicator = Indicator::findOrFail($indicatorId);
-        
+
         // Eager load associated tests
         $indicator->load(['tests' => function ($query) {
             $query->orderBy('name', 'asc');
         }]);
 
-        // Get tests that are not yet assigned to this indicator
-        $assignedTestIds = $indicator->tests->pluck('id')->toArray();
+        // Get tests that are not yet assigned to this indicator (dropdown only: id => name)
+        $assignedTestIds = $indicator->tests->pluck('id');
         $availableTests = SkillTest::whereNotIn('id', $assignedTestIds)
             ->orderBy('name', 'asc')
-            ->get();
+            ->pluck('name', 'id');
 
         return view('admin.indicator-tests.index', compact('indicator', 'availableTests'));
     }
@@ -50,7 +51,7 @@ class IndicatorTestController extends Controller
             DB::beginTransaction();
 
             $indicator = Indicator::findOrFail($validated['indicator_id']);
-            
+
             // Attach test to indicator with custom UUID primary key
             $indicator->tests()->attach($validated['test_id'], [
                 'id' => (string) Str::uuid(),
@@ -83,7 +84,7 @@ class IndicatorTestController extends Controller
 
             $pivot = IndicatorTest::findOrFail($id);
             $indicatorId = $pivot->indicator_id;
-            
+
             $pivot->delete();
 
             DB::commit();

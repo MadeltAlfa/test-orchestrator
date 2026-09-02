@@ -16,16 +16,20 @@ class UserController extends Controller
 {
     /**
      * Display a listing of the users with pagination and eager loading.
+     * withCount('assessments') merges per-row COUNT into single query (no N+1).
+     * Pencarian dibungkus closure where agar orWhere tidak merusak precedence AND/OR.
      */
     public function index(Request $request)
     {
         $search = $request->query('search');
 
-        $query = User::with('playerProfile');
+        $query = User::with('playerProfile')->withCount('assessments');
 
         if ($search) {
-            $query->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
         }
 
         $users = $query->orderBy('name', 'asc')
@@ -79,6 +83,8 @@ class UserController extends Controller
             $query->with('finalPosition')->orderBy('created_at', 'desc');
         }]);
 
+        $user->loadCount('assessments');
+
         return view('admin.users.show', compact('user'));
     }
 
@@ -131,8 +137,9 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
-            // Prevent deleting self if authenticated (safety measure)
             if (auth()->id() === $user->id) {
+                DB::rollBack();
+
                 return redirect()
                     ->route('superadmin.users.index')
                     ->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
@@ -152,7 +159,7 @@ class UserController extends Controller
 
             return redirect()
                 ->route('superadmin.users.index')
-                ->with('error', 'Terjadi kesalahan saat menghapus pengguna. Pengguna mungkin memiliki data assessment.');
+                ->with('error', 'Terjadi kesalahan saat menghapus pengguna.');
         }
     }
 }
