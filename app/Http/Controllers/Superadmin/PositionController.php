@@ -18,7 +18,10 @@ class PositionController extends Controller
      */
     public function index()
     {
-        $positions = Position::withCount('indicators')
+        $positions = Position::with(['indicators' => function ($query) {
+                $query->orderBy('code', 'asc');
+            }])
+            ->withCount('indicators')
             ->orderBy('code', 'asc')
             ->paginate(10);
 

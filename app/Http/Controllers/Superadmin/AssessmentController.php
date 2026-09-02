@@ -22,6 +22,7 @@ class AssessmentController extends Controller
 
     /**
      * Display a listing of assessments with pagination and eager loaded relations.
+     * Eager load scores + results agar Blade yang akses koleksi tidak trigger lazy load.
      * withCount merges per-row COUNT queries into single query (no N+1).
      * orWhereHas dibungkus closure where agar precedence AND/OR aman.
      */
@@ -29,8 +30,8 @@ class AssessmentController extends Controller
     {
         $search = $request->query('search');
 
-        $query = Assessment::with(['user', 'player', 'finalPosition'])
-            ->withCount(['testResults', 'scores']);
+        $query = Assessment::with(['user', 'player', 'finalPosition', 'scores', 'results'])
+            ->withCount(['testResults', 'scores', 'results']);
 
         if ($search) {
             $query->where(function ($q) use ($search) {

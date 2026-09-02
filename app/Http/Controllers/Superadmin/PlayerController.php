@@ -27,7 +27,8 @@ class PlayerController extends Controller
         $sort = $validated['sort'] ?? 'name';
         $order = $validated['order'] ?? 'asc';
 
-        $query = Player::with(['coach'])->withCount('assessments');
+        // Eager load menutup N+1: players + coach + profile + position + count = 4 query total.
+        $query = Player::with(['coach', 'profile.position'])->withCount('assessments');
 
         if ($search) {
             $query->where(function ($q) use ($search) {

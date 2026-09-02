@@ -16,14 +16,15 @@ class UserController extends Controller
 {
     /**
      * Display a listing of the users with pagination and eager loading.
-     * withCount('assessments') merges per-row COUNT into single query (no N+1).
+     * with(['player', 'playerProfile']) + withCount('assessments') merges
+     * relasi dan COUNT ke query konstan (no N+1).
      * Pencarian dibungkus closure where agar orWhere tidak merusak precedence AND/OR.
      */
     public function index(Request $request)
     {
         $search = $request->query('search');
 
-        $query = User::with('playerProfile')->withCount('assessments');
+        $query = User::with(['player', 'playerProfile'])->withCount('assessments');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -79,7 +80,7 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        $user->load(['playerProfile', 'assessments' => function ($query) {
+        $user->load(['player', 'playerProfile', 'assessments' => function ($query) {
             $query->with('finalPosition')->orderBy('created_at', 'desc');
         }]);
 
@@ -142,17 +143,16 @@ class UserController extends Controller
 
                 return redirect()
                     ->route('superadmin.users.index')
-                    ->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
+                    ->with('error', 'Anda tidak dapat menghapus akun sendiri.');
             }
 
-            $userName = $user->name;
             $user->delete();
 
             DB::commit();
 
             return redirect()
                 ->route('superadmin.users.index')
-                ->with('success', "Akun pengguna {$userName} berhasil dihapus!");
+                ->with('success', "Akun pengguna {$user->name} berhasil dihapus!");
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Gagal menghapus user: ' . $e->getMessage());
