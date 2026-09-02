@@ -17,7 +17,15 @@ class PlayerController extends Controller
      */
     public function index(Request $request)
     {
-        $search = $request->query('search');
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'sort' => ['nullable', 'string', 'in:name,created_at'],
+            'order' => ['nullable', 'string', 'in:asc,desc'],
+        ]);
+
+        $search = $validated['search'] ?? null;
+        $sort = $validated['sort'] ?? 'name';
+        $order = $validated['order'] ?? 'asc';
 
         $query = Player::with(['coach'])->withCount('assessments');
 
@@ -31,9 +39,13 @@ class PlayerController extends Controller
             });
         }
 
-        $players = $query->orderBy('name', 'asc')->paginate(10);
+        $data = $query->orderBy($sort, $order)->paginate(15)->withQueryString();
 
-        return view('admin.players.index', compact('players', 'search'));
+        if ($request->wantsJson()) {
+            return response()->json($data);
+        }
+
+        return view('superadmin.players.index', compact('data', 'search', 'sort', 'order'));
     }
 
     /**
