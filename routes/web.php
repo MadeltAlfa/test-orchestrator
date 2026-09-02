@@ -37,13 +37,6 @@ Route::get('/panduan-posisi', [LandingController::class, 'panduanPosisi'])->name
 Route::get('/panduan-tes', [LandingController::class, 'panduanTes'])->name('panduan-tes');
 Route::get('/panduan-tes/{id}', [LandingController::class, 'panduanTesShow'])->name('panduan-tes.show');
 
-Route::get('/dashboard', function () {
-    if (auth()->user()->role === 'superadmin') {
-        return redirect()->route('superadmin.dashboard');
-    }
-    return redirect()->route('user.dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -51,7 +44,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // ─── SUPERADMIN ROUTES ────────────────────────────────────────────────────────
-Route::middleware(['auth'])->prefix('superadmin')->name('superadmin.')->group(function () {
+Route::middleware(['auth', 'role:superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('positions', PositionController::class);
     Route::resource('indicators', IndicatorController::class);
@@ -64,60 +57,38 @@ Route::middleware(['auth'])->prefix('superadmin')->name('superadmin.')->group(fu
     Route::resource('players', SuperadminPlayerController::class);
     Route::resource('player-profiles', PlayerProfileController::class);
     // Pivot-Weight Position & Indicator
-    Route::get('positions/{position}/indicators', [PositionIndicatorController::class, 'index'])->name('position-indicators.index');
-    Route::post('position-indicators', [PositionIndicatorController::class, 'store'])->name('position-indicators.store');
-    Route::put('position-indicators/{id}', [PositionIndicatorController::class, 'update'])->name('position-indicators.update');
-    Route::delete('position-indicators/{id}', [PositionIndicatorController::class, 'destroy'])->name('position-indicators.destroy');
-    // Pivot Link Indicator & Test
-    Route::get('indicators/{indicator}/tests', [IndicatorTestController::class, 'index'])->name('indicator-tests.index');
-    Route::post('indicator-tests', [IndicatorTestController::class, 'store'])->name('indicator-tests.store');
-    Route::delete('indicator-tests/{id}', [IndicatorTestController::class, 'destroy'])->name('indicator-tests.destroy');
-    // Assessment & PDF Export
-    Route::get('assessments/{assessment}/print', [AssessmentController::class, 'printPdf'])->name('assessments.print');
-    Route::resource('assessments', AssessmentController::class)->only(['index', 'show', 'destroy']);
+    Route::get('positions/{position}/indicators', [PositionIndicatorController::class, 'index'])->name('positions.indicators.index');
+    Route::put('positions/{position}/indicators', [PositionIndicatorController::class, 'update'])->name('positions.indicators.update');
+    // Pivot Indicator & Test
+    Route::get('indicators/{indicator}/tests', [IndicatorTestController::class, 'index'])->name('indicators.tests.index');
+    Route::put('indicators/{indicator}/tests', [IndicatorTestController::class, 'update'])->name('indicators.tests.update');
+
+    Route::resource('assessments', AssessmentController::class);
     Route::resource('assessment-results', AssessmentResultController::class)->only(['index', 'show']);
-    // Reports & Exports
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
-    Route::get('reports/export-pdf', [ReportController::class, 'exportPdf'])->name('reports.export-pdf');
-    Route::get('reports/export-excel', [ReportController::class, 'exportExcel'])->name('reports.export-excel');
-    // System Settings
-    Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
+    Route::get('settings', [SettingController::class, 'edit'])->name('settings.edit');
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
 });
 
-// ─── USER / PLAYER ROUTES ────────────────────────────────────────────────────
-Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
-    // Dashboard
+// ─── USER ROUTES ────────────────────────────────────────────────────────────
+Route::middleware(['auth', 'role:user'])->prefix('user')->name('user.')->group(function () {
     Route::get('/dashboard', [UserDashboardController::class, 'index'])->name('dashboard');
-    // Manajemen Pemain (Pelatih)
-    Route::resource('players', \App\Http\Controllers\User\PlayerController::class)->except(['create', 'edit']);
-    // Profil Pemain
-    Route::get('/profile', [UserProfileController::class, 'index'])->name('profile.index');
-    Route::get('/profile/edit', [UserProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile', [UserProfileController::class, 'update'])->name('profile.update');
-    // Cek & Hitung Posisi
-    Route::get('/position-check/input-score', [PositionCheckController::class, 'inputScore'])->name('position-check.input-score');
-    Route::post('/position-check/input-score', [PositionCheckController::class, 'storeInputScore'])->name('position-check.store-input-score');
+    Route::get('/profile', [UserProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [UserProfileController::class, 'update'])->name('profile.update');
+
     Route::get('/position-check', [PositionCheckController::class, 'index'])->name('position-check.index');
     Route::post('/position-check', [PositionCheckController::class, 'store'])->name('position-check.store');
-    Route::post('/position-check/calculate', [PositionCheckController::class, 'calculate'])->name('position-check.calculate');
-    Route::get('/position-check/{id}/result', [PositionCheckController::class, 'result'])->name('position-check.result');
-    // Konversi Skor Tes (Stopwatch/Increment/Ajax)
-    Route::post('/score-tests/submit', [ScoreTestController::class, 'submit'])->name('score-tests.submit');
-    Route::post('/score-tests/ajax-convert', [ScoreTestController::class, 'convertScore'])->name('score-tests.ajax-convert');
-    Route::get('/score-tests', [ScoreTestController::class, 'index'])->name('score-tests.index');
-    Route::get('/score-tests/{id}', [ScoreTestController::class, 'show'])->name('score-tests.show');
-    // Assessment Pemain
-    Route::resource('assessments', UserAssessmentController::class)->only(['index', 'show', 'store']);
-    Route::get('assessments/{assessment}/ranking', [UserAssessmentResultController::class, 'ranking'])->name('assessments.ranking');
-    Route::get('assessment-results/{id}', [UserAssessmentResultController::class, 'show'])->name('assessment-results.show');
-    // Riwayat Assessment
-    Route::resource('history', HistoryController::class)->only(['index', 'show', 'destroy']);
-    // Cetak PDF / Print
-    Route::get('pdf/assessment/{id}', [UserPdfController::class, 'assessment'])->name('pdf.assessment');
-    Route::get('pdf/history', [UserPdfController::class, 'history'])->name('pdf.history');
-    // Panduan Tes
-    Route::resource('guides', GuideController::class)->only(['index', 'show']);
+
+    Route::get('/score-test', [ScoreTestController::class, 'index'])->name('score-test.index');
+    Route::post('/score-test', [ScoreTestController::class, 'store'])->name('score-test.store');
+
+    Route::get('/assessments', [UserAssessmentController::class, 'index'])->name('assessments.index');
+    Route::get('/assessments/{assessment}', [UserAssessmentController::class, 'show'])->name('assessments.show');
+    Route::get('/assessment-results/{result}', [UserAssessmentResultController::class, 'show'])->name('assessment-results.show');
+
+    Route::get('/history', [HistoryController::class, 'index'])->name('history.index');
+    Route::get('/pdf/{result}', [UserPdfController::class, 'download'])->name('pdf.download');
+    Route::get('/guide', [GuideController::class, 'index'])->name('guide.index');
 });
 
 require __DIR__.'/auth.php';
