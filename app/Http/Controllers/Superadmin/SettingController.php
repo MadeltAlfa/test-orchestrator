@@ -61,7 +61,7 @@ class SettingController extends Controller
     {
         $settings = $this->readSettings();
 
-        return view('admin.settings.index', compact('settings'));
+        return view('superadmin.settings.index', compact('settings'));
     }
 
     /**
