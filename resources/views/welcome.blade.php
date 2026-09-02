@@ -32,19 +32,14 @@
       </div>
       <div class="hero-stats">
             <div class="stat-card">
-                  <div class="stat-num">{{ $totalPositions }}</div>
+                  <div class="stat-num">{{ $positionsCount }}</div>
                   <div class="stat-label">Posisi Dianalisis</div>
                   <div class="stat-trend">↑ GK hingga ST</div>
             </div>
             <div class="stat-card">
-                  <div class="stat-num">{{ $totalIndicators }}</div>
+                  <div class="stat-num">{{ $indicatorsCount }}</div>
                   <div class="stat-label">Parameter Ukur</div>
                   <div class="stat-trend">↑ Fisik &amp; Teknis</div>
-            </div>
-            <div class="stat-card">
-                  <div class="stat-num">{{ $totalTests }}</div>
-                  <div class="stat-label">Jenis Tes</div>
-                  <div class="stat-trend">↑ Terstandarisasi</div>
             </div>
       </div>
       <div class="scroll-indicator">
@@ -227,7 +222,7 @@
 <!-- STATS BAND -->
 <div id="stats-band">
       <div class="band-stat">
-            <span class="band-num"><span class="count-num" data-target="{{ $totalAssessments }}">0</span></span>
+            <span class="band-num"><span class="count-num" data-target="{{ $assessmentsCount }}">0</span></span>
             <span class="band-label">Assessmen Dilakukan</span>
       </div>
       <div class="band-stat">

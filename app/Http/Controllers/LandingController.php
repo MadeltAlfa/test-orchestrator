@@ -17,20 +17,18 @@ class LandingController extends Controller
      */
     public function index()
     {
-        $positions   = Position::with(['indicators'])->get();
-        $totalPositions   = $positions->count();
-        $totalIndicators  = Indicator::count();
-        $totalTests       = SkillTest::count();
-        $totalAssessments = Assessment::count();
-        $skillTests       = SkillTest::all();
+        $positionsCount   = Position::count();
+        $indicatorsCount  = Indicator::count();
+        $skillTestsCount  = SkillTest::count();
+        $assessmentsCount = Assessment::count();
+        $positions        = Position::select('id', 'code', 'name')->with(['indicators:id,position_id,name'])->get();
 
         return view('welcome', compact(
             'positions',
-            'totalPositions',
-            'totalIndicators',
-            'totalTests',
-            'totalAssessments',
-            'skillTests'
+            'positionsCount',
+            'indicatorsCount',
+            'skillTestsCount',
+            'assessmentsCount'
         ));
     }
 
