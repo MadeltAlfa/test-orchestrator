@@ -1,0 +1,24 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy ke Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 18158
+          script: |
+            cd /home/nund/webproject/aplikasi_laravel
+            git pull origin main
+            docker exec web_laravel composer install --no-interaction --prefer-dist --optimize-autoloader
+            docker exec web_laravel php artisan migrate --force
+            docker exec web_laravel php artisan optimize:clear
