@@ -65,8 +65,7 @@ class LandingController extends Controller
         $guide = TestGuide::with([
             'test.norms' => fn($q) => $q->orderBy('score', 'desc'),
             'sections'   => fn($q) => $q->orderBy('sort_order'),
-        ])->where('id', $id)
-          ->orWhere('test_id', $id)
+        ])->where(fn($q) => $q->where('id', $id)->orWhere('test_id', $id))
           ->firstOrFail();
 
         return view('landing-page.panduan-tes-show', compact('guide'));
